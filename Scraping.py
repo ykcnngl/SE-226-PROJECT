@@ -19,6 +19,7 @@ movie_links = {}
 dialogue_text = ""
 scene_description = ""
 
+
 # --- IMDb Data Fetch ---
 def fetch_top_movies():
     url = "https://www.imdb.com/chart/top/"
@@ -34,10 +35,12 @@ def fetch_top_movies():
         full_link = "https://www.imdb.com" + a_tag.get("href")
         movie_links[title] = full_link
         movies.append(title)
+
     return movies
 
 # --- Storyline Fetch ---
 def get_movie_storyline(title):
+    if title =="The Dark Knight" : title = "Batman The Dark Knight"
     ia = Cinemagoer()
     movies = ia.search_movie(title)
     if movies:
@@ -50,7 +53,7 @@ def get_movie_storyline(title):
 
 # --- Gemini: Dialogue Generation ---
 def generate_dialogue(storyline, characters, length):
-    prompt = f"Write a dialogue using the following plot: {storyline}. It should have {characters} characters and max {length} words."
+    prompt = f"Write a from a plot from some of top 10 imdb movies using: {storyline}. It should have {characters} characters and max {length} words."
     try:
         response = gen_model.generate_content(prompt)
         return response.text
@@ -104,7 +107,7 @@ def on_generate():
     if image_bytes:
         with open("generated_image.jpg", "wb") as f:
             f.write(image_bytes)
-        img = Image.open("generated_image.jpg").resize((300, 300))
+        img = Image.open("generated_image.jpg")
         photo = ImageTk.PhotoImage(img)
         image_label.config(image=photo)
         image_label.image = photo
@@ -125,49 +128,94 @@ root = tk.Tk()
 root.title("PDA-226 IMDB Movie Dialogue Generator")
 root.geometry("1000x700")
 
-tk.Label(root, text="Top 10 IMDb Movies").pack()
-movie_combo = ttk.Combobox(root, values=fetch_top_movies(), width=80)
+# Create Notebook (tab container)
+notebook = ttk.Notebook(root)
+notebook.pack(fill='both', expand=True)
+
+# --- Tab Frames ---
+# 1. Settings Tab
+settings_tab = ttk.Frame(notebook)
+notebook.add(settings_tab, text='Settings')
+
+# 2. Storyline Tab
+story_tab = ttk.Frame(notebook)
+notebook.add(story_tab, text='Storyline')
+
+# 3. Scene Description Tab
+scene_tab = ttk.Frame(notebook)
+notebook.add(scene_tab, text='Scene')
+
+# 4. Dialogue Tab
+dialogue_tab = ttk.Frame(notebook)
+notebook.add(dialogue_tab, text='Dialogue')
+
+# 5. Image Tab
+image_tab = ttk.Frame(notebook)
+notebook.add(image_tab, text='Image')
+
+# --- Settings Tab Widgets ---
+tk.Label(settings_tab, text="Top 10 IMDb Movies").pack(pady=(10,5))
+movie_combo = ttk.Combobox(settings_tab, values=fetch_top_movies(), width=80)
 movie_combo.pack()
 
-frame = tk.Frame(root)
+frame = ttk.Frame(settings_tab)
 frame.pack(pady=10)
 
-tk.Label(frame, text="Number of Characters (2-4):").grid(row=0, column=0)
+# Number of Characters
+ttk.Label(frame, text="Number of Characters (2-4):").grid(row=0, column=0, padx=5, pady=5)
 char_spinbox = ttk.Spinbox(frame, from_=2, to=4, width=5)
-char_spinbox.grid(row=0, column=1)
+char_spinbox.grid(row=0, column=1, padx=5, pady=5)
 
-tk.Label(frame, text="Max Dialogue Length:").grid(row=0, column=2)
+# Max Dialogue Length
+ttk.Label(frame, text="Max Dialogue Length:").grid(row=0, column=2, padx=5, pady=5)
 length_entry = ttk.Entry(frame, width=10)
 length_entry.insert(0, "500")
-length_entry.grid(row=0, column=3)
+length_entry.grid(row=0, column=3, padx=5, pady=5)
 
-tk.Label(frame, text="Location:").grid(row=1, column=0)
+# Location
+ttk.Label(frame, text="Location:").grid(row=1, column=0, padx=5, pady=5)
 location_entry = ttk.Entry(frame, width=30)
 location_entry.insert(0, "New York")
-location_entry.grid(row=1, column=1)
+location_entry.grid(row=1, column=1, padx=5, pady=5)
 
-tk.Label(frame, text="Style:").grid(row=1, column=2)
+# Style
+ttk.Label(frame, text="Style:").grid(row=1, column=2, padx=5, pady=5)
 style_combo = ttk.Combobox(frame, values=["Marvel", "Futuristic", "Cartoon", "Realistic"], width=15)
 style_combo.current(0)
-style_combo.grid(row=1, column=3)
+style_combo.grid(row=1, column=3, padx=5, pady=5)
 
-tk.Button(root, text="Generate Dialogue & Image", command=on_generate).pack(pady=10)
+# Generate Button
+ttk.Button(settings_tab, text="Generate Dialogue & Image", command=on_generate).pack(pady=10)
 
-tk.Label(root, text="Storyline:").pack()
-summary_label = tk.Label(root, text="", wraplength=900, justify="left")
-summary_label.pack()
+# --- Storyline Tab Widgets ---
+tk.Label(story_tab, text="Storyline:").pack(anchor='nw', padx=10, pady=(10,5))
+summary_label = tk.Label(story_tab, text="", wraplength=900, justify="left")
+summary_label.pack(fill='both', expand=True, padx=10)
 
-tk.Label(root, text="Scene Description:").pack()
-scene_label = tk.Label(root, text="", wraplength=900, justify="left")
-scene_label.pack()
+# --- Scene Description Tab Widgets ---
+tk.Label(scene_tab, text="Scene Description:").pack(anchor='nw', padx=10, pady=(10,5))
+scene_label = tk.Label(scene_tab, text="", wraplength=900, justify="left")
+scene_label.pack(fill='both', expand=True, padx=10)
 
-tk.Label(root, text="Generated Dialogue:").pack()
-dialogue_box = tk.Text(root, height=10, width=110)
-dialogue_box.pack()
+# --- Dialogue Tab Widgets ---
+tk.Label(dialogue_tab, text="Generated Dialogue:").pack(anchor='nw', padx=10, pady=(10,5))
+# Scrollable Text
+text_frame = tk.Frame(dialogue_tab)
+text_frame.pack(fill='both', expand=True, padx=10)
 
-tk.Button(root, text="Save Dialogue to File", command=save_dialogue).pack(pady=5)
+scrollbar = tk.Scrollbar(text_frame)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-image_label = tk.Label(root)
-image_label.pack()
+dialogue_box = tk.Text(text_frame, height=15, width=110, yscrollcommand=scrollbar.set, wrap="word")
+dialogue_box.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+scrollbar.config(command=dialogue_box.yview)
+
+# Save Button
+ttk.Button(dialogue_tab, text="Save Dialogue to File", command=save_dialogue).pack(pady=5)
+
+# --- Image Tab Widgets ---
+image_label = tk.Label(image_tab)
+image_label.pack(fill='both', expand=True)
 
 root.mainloop()
