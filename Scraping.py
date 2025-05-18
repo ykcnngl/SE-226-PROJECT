@@ -143,7 +143,7 @@ def save_dialogue():
 
 # --- GUI Setup ---
 root = tk.Tk()
-root.title("PDA-226 IMDB Movie Dialogue Generator")
+root.title("IMDB Movie Dialogue Generator")
 root.geometry("1000x700")
 
 # Create Notebook (tab container)
