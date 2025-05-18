@@ -18,6 +18,7 @@ image_model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
 movie_links = {}
 dialogue_text = ""
 scene_description = ""
+loading_bar = None
 
 
 # --- IMDb Data Fetch ---
@@ -81,36 +82,53 @@ def generate_image(prompt, location, style):
 
 # --- GUI Callback ---
 def on_generate():
-    global dialogue_text, scene_description
+    global dialogue_text, scene_description, loading_bar
 
     selected = movie_combo.get()
     if not selected:
         messagebox.showerror("Error", "Please select a movie.")
         return
 
-    chars = char_spinbox.get()
-    length = length_entry.get()
-    location = location_entry.get()
-    style = style_combo.get()
+    # --- Start the Loading ProgressBar  ---
+    if not loading_bar:
+        loading_bar = ttk.Progressbar(root, mode='indeterminate', length=200)
+        loading_bar.place(relx=0.5, rely=0.95, anchor="center")
+        loading_bar.start()
+    root.update()
 
-    storyline = get_movie_storyline(selected)
-    summary_label.config(text=f"{storyline}")
+    try:
+        chars = char_spinbox.get()
+        length = length_entry.get()
+        location = location_entry.get()
+        style = style_combo.get()
 
-    scene_description = generate_scene_description(selected, chars, storyline)
-    scene_label.config(text=scene_description)
+        storyline = get_movie_storyline(selected)
+        summary_label.config(text=f"{storyline}")
+        root.update()
 
-    dialogue_text = generate_dialogue(storyline, chars, length)
-    dialogue_box.delete("1.0", tk.END)
-    dialogue_box.insert(tk.END, dialogue_text)
+        scene_description = generate_scene_description(selected, chars, storyline)
+        scene_label.config(text=scene_description)
+        root.update()
 
-    image_bytes = generate_image(scene_description, location, style)
-    if image_bytes:
-        with open("generated_image.jpg", "wb") as f:
-            f.write(image_bytes)
-        img = Image.open("generated_image.jpg")
-        photo = ImageTk.PhotoImage(img)
-        image_label.config(image=photo)
-        image_label.image = photo
+        dialogue_text = generate_dialogue(storyline, chars, length)
+        dialogue_box.delete("1.0", tk.END)
+        dialogue_box.insert(tk.END, dialogue_text)
+        root.update()
+
+        image_bytes = generate_image(scene_description, location, style)
+        if image_bytes:
+            with open("generated_image.jpg", "wb") as f:
+                f.write(image_bytes)
+            img = Image.open("generated_image.jpg")
+            photo = ImageTk.PhotoImage(img)
+            image_label.config(image=photo)
+            image_label.image = photo
+    finally:
+        # --- Stop and Destroy the Loading ProgressBar ---
+        if loading_bar:
+            loading_bar.stop()
+            loading_bar.destroy()
+            loading_bar = None
 
 # --- Save to File ---
 def save_dialogue():
