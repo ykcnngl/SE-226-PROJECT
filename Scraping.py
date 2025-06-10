@@ -9,7 +9,7 @@ import vertexai
 from vertexai.preview.vision_models import ImageGenerationModel
 
 # --- API Config ---
-genai.configure(api_key="AIzaSyCJM-AzGpg_ey8mE8V7sOJTvUCh12Ygq-0")
+genai.configure(api_key="YOUR API KEY")
 vertexai.init(project="mercurial-time-459907-r1", location="us-central1")
 gen_model = genai.GenerativeModel('gemini-2.0-flash-lite')
 image_model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
